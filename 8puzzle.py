@@ -40,7 +40,7 @@ class TreeNode:
     
     def __lt__(self, other):
         """Overrides comparison for priority queue. Compares based on cumulative cost."""
-        return self.cost < other.cost
+        return self.cost+self.heuristic_value < other.cost+self.heuristic_value 
     
     def find_zero(self):
         for i in range(len(self.puzzle_state)):
@@ -86,6 +86,23 @@ class TreeNode:
                     return
         return new_puzzle_state 
 
+def manhattan_distance(current_state):
+    distance = 0
+    for row in range(len(current_state)):
+        for col in range(len(current_state[row])):
+            if current_state[row][col] != 0:
+                target_row, target_col = divmod(current_state[row][col] - 1, len(current_state))
+                distance += abs(row - target_row) + abs(col - target_col)
+    return distance
+
+def misplaced_tiles(current_state):
+    misplaced = 0
+    for row in range(len(current_state)):
+        for col in range(len(current_state[row])):
+            if current_state[row][col] != 0 and current_state[row][col] != eight_goal_state[row][col]:
+                misplaced += 1
+    return misplaced
+
 
 def select_algorithm(puzzle):
     algorithm = input("Enter 1 - for Uniform Cost Search \nEnter 2 - for A* Misplaced Tile Heuristic\nEnter 3 - for A* Manhattan Heuristic\n")
@@ -93,9 +110,9 @@ def select_algorithm(puzzle):
         case "1":
             solution = a_star(puzzle, 0)  
         case "2":
-            solution = a_star(puzzle, 2)  
+            solution = a_star(puzzle, misplaced_tiles(puzzle))  
         case "3":
-            solution = a_star(puzzle, 3)  
+            solution = a_star(puzzle, manhattan_distance(puzzle))   
         case _:
             print("Invalid choice") 
     if solution[0]:
@@ -108,7 +125,7 @@ def select_algorithm(puzzle):
 
 def a_star(puzzle, heuristic):
     queue = []
-    heapq.heappush(queue, TreeNode(None, puzzle, 0, 0))
+    heapq.heappush(queue, TreeNode(None, puzzle, 0, heuristic))
     nodes_expanded = 0
     max_queue_size = 0
     visited_nodes = [puzzle]
@@ -124,7 +141,7 @@ def a_star(puzzle, heuristic):
         for move in ["up", "down", "left", "right"]:
             new_puzzle_state = current_node.move(move)
             if new_puzzle_state and new_puzzle_state not in visited_nodes: 
-                heapq.heappush(queue, TreeNode(current_node, new_puzzle_state, current_node.cost+1, 0))
+                heapq.heappush(queue, TreeNode(current_node, new_puzzle_state, current_node.cost+1, misplaced_tiles(puzzle)))
                 visited_nodes.append(new_puzzle_state) 
     
     return None, nodes_expanded, max_queue_size 
