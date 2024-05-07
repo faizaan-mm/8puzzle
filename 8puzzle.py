@@ -1,5 +1,6 @@
 import copy
 import heapq
+import pprint
 
 trivial = [[1, 2, 3],
 [4, 5, 6],
@@ -60,25 +61,25 @@ class TreeNode:
         zero_row, zero_column = self.find_zero()
         match action:    
             case 'up':
-                if zero_row - 1 > 0 and zero_row - 1 < len(self.puzzle_state):
+                if zero_row - 1 >= 0 and zero_row - 1 < len(self.puzzle_state):
                     new_puzzle_state[zero_row][zero_column] = self.puzzle_state[zero_row - 1][zero_column]
                     new_puzzle_state[zero_row - 1][zero_column] = self.puzzle_state[zero_row][zero_column]
                 else:
                     return
             case 'down':
-                if zero_row + 1 > 0 and zero_row + 1 < len(self.puzzle_state):
+                if zero_row + 1 >= 0 and zero_row + 1 < len(self.puzzle_state):
                     new_puzzle_state[zero_row][zero_column] = self.puzzle_state[zero_row + 1][zero_column]
                     new_puzzle_state[zero_row + 1][zero_column] = self.puzzle_state[zero_row][zero_column]
                 else:
                     return
             case 'left':
-                if zero_column - 1 > 0 and zero_column - 1 < len(self.puzzle_state):
+                if zero_column - 1 >= 0 and zero_column - 1 < len(self.puzzle_state):
                     new_puzzle_state[zero_row][zero_column] = self.puzzle_state[zero_row][zero_column-1]
                     new_puzzle_state[zero_row][zero_column-1] = self.puzzle_state[zero_row][zero_column]
                 else:
                     return
             case 'right':
-                if zero_column + 1 > 0 and zero_column + 1 < len(self.puzzle_state):
+                if zero_column + 1 >= 0 and zero_column + 1 < len(self.puzzle_state):
                     new_puzzle_state[zero_row][zero_column] = self.puzzle_state[zero_row][zero_column+1]
                     new_puzzle_state[zero_row][zero_column+1] = self.puzzle_state[zero_row][zero_column]
                 else:
@@ -107,27 +108,24 @@ def select_algorithm(puzzle):
 
 def a_star(puzzle, heuristic):
     queue = []
-    visited_nodes = {}
-    puzzle_node = TreeNode(None, puzzle, 0, 0)
-    heapq.heappush(queue, puzzle_node)
+    heapq.heappush(queue, TreeNode(None, puzzle, 0, 0))
     nodes_expanded = 0
     max_queue_size = 0
     visited_nodes = [puzzle]
     
     while queue:
         max_queue_size = max(len(queue), max_queue_size)
-        current_state = heapq.heappop(queue)
-        
-        if current_state.puzzle_state == eight_goal_state:
-            return current_state, nodes_expanded, max_queue_size
+        current_node = heapq.heappop(queue)
+        if current_node.puzzle_state == eight_goal_state:
+            return current_node, nodes_expanded, max_queue_size
         
         nodes_expanded+=1
         
         for move in ["up", "down", "left", "right"]:
-            new_puzzle_state = puzzle_node.move(move)
+            new_puzzle_state = current_node.move(move)
             if new_puzzle_state and new_puzzle_state not in visited_nodes: 
-                    heapq.heappush(queue, TreeNode(current_state, new_puzzle_state, current_state.cost+1, 0))
-                    visited_nodes.append(new_puzzle_state) 
+                heapq.heappush(queue, TreeNode(current_node, new_puzzle_state, current_node.cost+1, 0))
+                visited_nodes.append(new_puzzle_state) 
     
     return None, nodes_expanded, max_queue_size 
         
@@ -135,7 +133,7 @@ def a_star(puzzle, heuristic):
 
 puzzle_mode = input("Welcome to an 8-Puzzle Solver Type '1' to use a default puzzle, or '2' to create your own.\n")
 if puzzle_mode == "1":
-    difficulty = input("Enter your difficulty choice - trivial, very_easy, easy, doable, oh_boy, impossible.1\n")
+    difficulty = input("Enter your difficulty choice - trivial, very_easy, easy, doable, oh_boy, impossible.\n")
     match difficulty:
         case "trivial":
             select_algorithm(trivial)
