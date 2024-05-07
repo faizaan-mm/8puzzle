@@ -32,11 +32,16 @@ eight_goal_state = [[1, 2, 3],
 
 
 class TreeNode:
-    def __init__(self, parent, puzzle_state, cost, heuristic_value=0):
+    def __init__(self, parent, puzzle_state, cost, heuristic=None):
         self.parent = parent
         self.puzzle_state = puzzle_state
         self.cost = cost
-        self.heuristic_value = heuristic_value
+        if heuristic == "manhattan_distance":
+            self.heuristic_value = manhattan_distance(puzzle_state)
+        if heuristic == "misplaced_tiles":
+            self.heuristic_value = misplaced_tiles(puzzle_state)
+        else:
+            self.heuristic_value = 0
     
     def __lt__(self, other):
         """Overrides comparison for priority queue. Compares based on cumulative cost."""
@@ -88,18 +93,18 @@ class TreeNode:
 
 def manhattan_distance(current_state):
     distance = 0
-    for row in range(len(current_state)):
-        for col in range(len(current_state[row])):
-            if current_state[row][col] != 0:
-                target_row, target_col = divmod(current_state[row][col] - 1, len(current_state))
-                distance += abs(row - target_row) + abs(col - target_col)
+    for i in range(len(current_state)):
+        for j in range(len(current_state[i])):
+            if current_state[i][j] != 0:
+                target_row, target_col = (current_state[i][j]-1)//len(current_state), (current_state[i][j]-1)%len(current_state[i])
+                distance += abs(i - target_row) + abs(j - target_col)
     return distance
 
 def misplaced_tiles(current_state):
     misplaced = 0
-    for row in range(len(current_state)):
-        for col in range(len(current_state[row])):
-            if current_state[row][col] != 0 and current_state[row][col] != eight_goal_state[row][col]:
+    for i in range(len(current_state)):
+        for j in range(len(current_state[i])):
+            if current_state[i][j] != 0 and current_state[i][j] != eight_goal_state[i][j]:
                 misplaced += 1
     return misplaced
 
@@ -108,11 +113,11 @@ def select_algorithm(puzzle):
     algorithm = input("Enter 1 - for Uniform Cost Search \nEnter 2 - for A* Misplaced Tile Heuristic\nEnter 3 - for A* Manhattan Heuristic\n")
     match algorithm:
         case "1":
-            solution = a_star(puzzle, 0)  
+            solution = a_star(puzzle)  
         case "2":
-            solution = a_star(puzzle, misplaced_tiles(puzzle))  
+            solution = a_star(puzzle, "misplaced_tiles")  
         case "3":
-            solution = a_star(puzzle, manhattan_distance(puzzle))   
+            solution = a_star(puzzle, "manhattan_distance")   
         case _:
             print("Invalid choice") 
     if solution[0]:
@@ -141,7 +146,7 @@ def a_star(puzzle, heuristic):
         for move in ["up", "down", "left", "right"]:
             new_puzzle_state = current_node.move(move)
             if new_puzzle_state and new_puzzle_state not in visited_nodes: 
-                heapq.heappush(queue, TreeNode(current_node, new_puzzle_state, current_node.cost+1, misplaced_tiles(puzzle)))
+                heapq.heappush(queue, TreeNode(current_node, new_puzzle_state, current_node.cost+1, heuristic))
                 visited_nodes.append(new_puzzle_state) 
     
     return None, nodes_expanded, max_queue_size 
